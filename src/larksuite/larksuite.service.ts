@@ -11,10 +11,12 @@ import { firstValueFrom } from 'rxjs';
 import * as https from "https";
 import axios from 'axios';
 import { randomInt } from 'crypto';
-import { User } from './user.schema';
 import { Record, TYPE } from './records.schema';
 import { createWorker } from 'tesseract.js';
 import * as cheerio from 'cheerio';
+import { data } from 'cheerio/lib/api/attributes';
+import path from 'path';
+import { Transaction } from './transaction.schema';
 // import * as FormData from 'form-data';
 // import { Duplex } from 'stream';
 
@@ -25,29 +27,57 @@ export class LarkSuiteService {
   constructor(private readonly configService: ConfigService,
     private readonly http: HttpService,
     @InjectModel(Watch.name) private watchModel: Model<Watch>,
+    @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
     @InjectModel(Table.name) private tableModel: Model<Table>,
-    @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Record.name) private recordModel: Model<Record>,
   ) {
     this.httpsAgent = new https.Agent({
       rejectUnauthorized: false,
     });
     this.larkClient = new lark.Client({
-      appId: process.env.APP_ID,
-      appSecret: process.env.APP_SECRET,
+      appId: this.configService.get('lark.app_id'),
+      // appId: 'cli_a5c27e8d76789009',
+      appSecret: this.configService.get('lark.app_secret'),
+      // appSecret: 'ucptiuCEFoWAGD56Hk2uMfdjS3sO3vAc',
       appType: lark.AppType.SelfBuild,
       domain: lark.Domain.Feishu,
+      // disableTokenCache: true
     });
   }
 
-
-
-
-  // @Cron(CronExpression.EVERY_30_MINUTES_BETWEEN_9AM_AND_6PM)
-  @Cron('5,35 0-12 * * *')
-  async cron1() {
-    console.log(new Date())
+  async test() {
+    console.log(await this.larkClient.bitable.appTableRecord.list({
+      path: {
+        app_token: this.configService.get('lark.topup_token'),
+        table_id: this.configService.get('lark.topup_table'),
+      }
+    },))
   }
+  async createApproval() {
+    const token = await this.larkClient.auth.appAccessToken.internal({
+      data: {
+        app_id: this.configService.get('lark.app_id'),
+        app_secret: this.configService.get('lark.app_secret'),
+      },
+    });
+    console.log(token)
+    // const depart = await this.larkClient.contact.v3.department.list()
+    const approval = await this.larkClient.approval.v4.instance.create({
+      data: {
+        approval_code: 'E656BBB3-379B-496F-A5C9-1CC0A2A389C1',
+        user_id: 'gd1cd86a',
+        // open_id: 'ou_806a18fb5bdf525e38ba219733bdbd73',
+        form: '[]',
+      },
+    }, lark.withTenantToken(token['tenant_access_token'])
+    )
+    console.log(approval.data)
+  }
+
+  // @Cron('5,35 0-12 * * *')
+  // async cron1() {
+  //   console.log(new Date())
+  // }
   // async sendRecordsToVacom() {
   //   const WDdata = await this.recordModel.find({ isPushed: false, type: TYPE.WITHDRAW })
   //   const savedWDData = this.mapWithdrawFieldFromLarkToVacom(WDdata.map((datum) => {
@@ -99,26 +129,26 @@ export class LarkSuiteService {
 
   // }
 
-  @Cron('0,30 0-12 * * *')
-  async cron2() {
-    console.log(new Date())
-  }
+  // @Cron('0,30 0-12 * * *')
+  // async cron2() {
+  //   console.log(new Date())
+  // }
   // async cronLarkRecord() {
   //   const now = Date.now()
   //   try {
   //     const watch = await this.watchModel.findOne();
   //     let lastCronTime = 0;
   //     if (watch) {
-  //       lastCronTime = now - 30*1000
+  //       lastCronTime = now - 30 * 1000
   //       watch.lastCronTime = lastCronTime;
   //       watch.now = now;
   //       await watch.save()
   //     } else {
-  //       await this.watchModel.create({ lastCronTime: 0, now})
+  //       await this.watchModel.create({ lastCronTime: 0, now })
   //     }
-  //     const topupRecords = await this.getNewRecords("", process.env.TOPUP_TABLEID, process.env.TOPUP_APP_TOKEN, lastCronTime);
+  //     const topupRecords = await this.getNewRecords("", this.configService.get('lark.topup_table'), this.configService.get('lark.topup_token'), lastCronTime);
 
-  //     const withdrawRecords = await this.getNewRecords("", process.env.WITHDRAW_TABLEID, process.env.WITHDRAW_APP_TOKEN, lastCronTime);
+  //     const withdrawRecords = await this.getNewRecords("", this.configService.get('lark.withdraw_table'), this.configService.get('withdraw_token'), lastCronTime);
   //     if (topupRecords && topupRecords[0]) {
   //       const savedTopupData = topupRecords.filter((record) => {
   //         return (record.fields["customer_code"] && record["fields"]["MA_NG"])
@@ -136,7 +166,7 @@ export class LarkSuiteService {
   //       await this.recordModel.insertMany(savedWithdrawData)
   //     }
   //   } catch (error) {
-  //     throw(error)
+  //     throw (error)
   //   }
   // }
 
@@ -282,9 +312,9 @@ export class LarkSuiteService {
       obj1["TK_NO2"] = "131"
       obj1["TEN_HV"] = "TENHV" && (datum["MA_NHOM"] && datum["MA_NHOM"][0] && datum["MA_NHOM"][0]["text"])
       obj1["MA_HV"] = "MAHV" && (datum["MA_HV"] && datum["MA_HV"][0] && datum["MA_HV"][0]["text"])
-      obj1["MA_KHO"] = "MAKHO" && (datum["MA_KHO"] && datum["MA_KHO"][0]&& datum["MA_KHO"][0]["text"])
-      obj1["MA_NG"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] &&  datum["MA_NG"][0]["text"])
-      obj1["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] &&  datum["MA_NG"][0]["text"])
+      obj1["MA_KHO"] = "MAKHO" && (datum["MA_KHO"] && datum["MA_KHO"][0] && datum["MA_KHO"][0]["text"])
+      obj1["MA_NG"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] && datum["MA_NG"][0]["text"])
+      obj1["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] && datum["MA_NG"][0]["text"])
       obj1["GIA2"] = 24000 && (datum["rate"] && datum["rate"][0])
       obj1["SO_LUONG"] = 1000 && (datum["quatity"] && datum["quatity"][0])
       obj1["TIEN2"] = obj1["GIA2"] * obj1["SO_LUONG"]
@@ -297,10 +327,10 @@ export class LarkSuiteService {
       obj2["TK_GV"] = "131" && (datum["TK_GV"] && datum["TK_GV"][0] && datum["TK_GV"][0].toString())
       obj2["TK_CO"] = "1561"
       obj2["TK_NO2"] = "131"
-      obj2["TEN_HV"] = "TENHV" && (datum["MA_NHOM"] && datum["MA_NHOM"][0]&& datum["MA_NHOM"][0]["text"])
-      obj2["MA_HV"] = "MAHV" && (datum["MA_HV"] && datum["MA_HV"][0]&& datum["MA_HV"][0]["text"])
-      obj2["MA_KHO"] = "MAKHO" && (datum["MA_KHO"] && datum["MA_KHO"][0]&& datum["MA_KHO"][0]["text"])
-      obj2["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] &&  datum["MA_NG"][0]["text"])
+      obj2["TEN_HV"] = "TENHV" && (datum["MA_NHOM"] && datum["MA_NHOM"][0] && datum["MA_NHOM"][0]["text"])
+      obj2["MA_HV"] = "MAHV" && (datum["MA_HV"] && datum["MA_HV"][0] && datum["MA_HV"][0]["text"])
+      obj2["MA_KHO"] = "MAKHO" && (datum["MA_KHO"] && datum["MA_KHO"][0] && datum["MA_KHO"][0]["text"])
+      obj2["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] && datum["MA_NG"][0]["text"])
       obj2["GIA2"] = 24000 && (datum["rate"] && datum["rate"][0])
       obj2["SO_LUONG"] = 1000 && (datum["quatity"] && datum["quatity"][0] * 0.05)
       obj2["TIEN2"] = obj2["GIA2"] * obj2["SO_LUONG"] * 0.05
@@ -356,8 +386,8 @@ export class LarkSuiteService {
       obj["TK_CO"] = "3311"
       obj["TK_NO"] = "1561"
       obj["MA_HV"] = "MAHV" && (datum["MA_HV"] && datum["MA_HV"][0] && datum["MA_HV"][0]["text"])
-      obj["MA_NG"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] &&  datum["MA_NG"][0]["text"])
-      obj["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] &&  datum["MA_NG"][0]["text"])
+      obj["MA_NG"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] && datum["MA_NG"][0]["text"])
+      obj["MA_NG_DC"] = "MA_NG" && (datum["MA_NG"] && datum["MA_NG"][0] && datum["MA_NG"][0]["text"])
       obj["GIA"] = 24000 && (datum["rate"] && datum["rate"][0])
       obj["SO_LUONG"] = 1000 && datum["Amount(auto)"]
       if (obj["GIA"] < 25500) obj["DVT_CB"] = "USD"
@@ -470,8 +500,8 @@ export class LarkSuiteService {
   }
   async cronUserFromLarkToVacom() {
     try {
-      const app_token = process.env.USER_APP_TOKEN
-      const table_id = process.env.USER_TABLEID
+      const app_token = this.configService.get('lark.user_token')
+      const table_id = this.configService.get('lark.user_table')
       const users = await this.getUserFromLark("", table_id, app_token)
       if (!users || !users[0]) {
         throw ('No User')
@@ -552,5 +582,22 @@ export class LarkSuiteService {
       return rows[0].attribs.src;
     }
     return null;
+  }
+
+  getUTCDay() {
+    const dateObj = new Date();
+    const month = dateObj.getUTCMonth() + 1; // months from 1-12
+    const day = dateObj.getUTCDate();
+    const year = dateObj.getUTCFullYear();
+
+
+    // Using template literals:
+    const newDate = `${year}-${month}-${day}`;
+
+    // Using padded values, so that 2023/1/7 becomes 2023/01/07
+    const pMonth = month.toString().padStart(2, "0");
+    const pDay = day.toString().padStart(2, "0");
+    const newPaddedDate = `${year}-${pMonth}-${pDay}`;
+    return newPaddedDate
   }
 }

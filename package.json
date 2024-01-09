@@ -36,6 +36,8 @@
     "bcrypt": "^5.1.0",
     "cheerio": "^1.0.0-rc.12",
     "ethers": "^6.6.5",
+    "facebook-nodejs-business-sdk": "^18.0.4",
+    "google-ads-api": "^14.2.0",
     "mongoose": "^7.4.0",
     "mongoose-sequence": "^6.0.0",
     "nestjs-telegraf": "^2.6.4",
