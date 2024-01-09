@@ -28,7 +28,7 @@ export class MarketingDataService {
             refresh_token: this.configService.get('google.refresh_token'),
             //download file credentials.json at OAuth2 credential method after add customer to Ads account
             // Use "auth2l fetch --credentials credentials.json --scope adwords \
-            // >     --output_format refresh_token" to generate refreshtoken because access_token that expired
+            // >--output_format refresh_token" to generate refreshtoken because access_token that expired
         })
         const api = FacebookAdsApi.init(
             this.configService.get('facebook.access_token'),

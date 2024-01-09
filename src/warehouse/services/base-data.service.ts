@@ -24,7 +24,7 @@ export class BaseDataService {
         // await this.bigquery.createDataset('human')
         // await this.bigquery.dataset('human').createTable('Bang2', options);
         // console.log(`Dataset ${dataset.id} created.`);
-        // await this.bigquery.dataset('human').table('Bang2').insert({"Name": "Nam Hoang", "Job": "Engineer", "Weight": 55, "IsMagic": false})
+        await this.bigquery.dataset('human').table('Bang2').insert([{"Name": "Nam Hai", "Job": "Dev", "Weight": 66, "IsMagic": false}, {"Name": "Minh Duong", "Job": "Singer", "Weight": 6, "IsMagic": true}])
        console.log(await this.bigquery.dataset('human').table('Bang2').getRows(
             // {"Name": "Quan", "Age": 29, "Weight": 55, "IsMagic": false}
             ))
