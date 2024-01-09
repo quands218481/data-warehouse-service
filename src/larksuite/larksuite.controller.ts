@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { LarkSuiteService } from './larksuite.service';
 
-@Controller('')
+@Controller('lark')
 export class LarkSuiteController {
   constructor(private readonly larkService: LarkSuiteService) { }
 

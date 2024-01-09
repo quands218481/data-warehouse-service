@@ -9,6 +9,7 @@ import { BaseDataService } from "./base-data.service";
 @Injectable()
 export class MarketingDataService {
     private readonly ggClient: any;
+    private readonly ggCustomer: any;
     private readonly fbAdsAccount: any;
     constructor(
         private readonly configService: ConfigService,
@@ -17,8 +18,17 @@ export class MarketingDataService {
     ) {
         this.ggClient = new GoogleAdsApi({
             developer_token: this.configService.get('google.dev_token'),
+            //dev_token got from ads account
             client_id: this.configService.get('google.client_id'),
             client_secret: this.configService.get('google.client_secret'),
+            //got from gg dev console by OAuth2 credential method
+        })
+        this.ggCustomer = this.ggClient.Customer({
+            customer_id: this.configService.get('google.login_customer_id'),
+            refresh_token: this.configService.get('google.refresh_token'),
+            //download file credentials.json at OAuth2 credential method after add customer to Ads account
+            // Use "auth2l fetch --credentials credentials.json --scope adwords \
+            // >     --output_format refresh_token" to generate refreshtoken because access_token that expired
         })
         const api = FacebookAdsApi.init(
             this.configService.get('facebook.access_token'),
@@ -32,7 +42,7 @@ export class MarketingDataService {
         const baseUrl = 'https://business-api.tiktok.com/open_api/v1.3/campaign/get/'
         const config = {
             headers: { 'Access-Token': this.configService.get('tiktok.access_token') },
-            params: {advertiser_id: this.configService.get('tiktok.ads_id'), fields: [], filtering: {}}
+            params: { advertiser_id: this.configService.get('tiktok.ads_id'), fields: [], filtering: {} }
         }
         const res = await firstValueFrom(this.http.get(baseUrl, config))
         if (res && res.data) {
@@ -102,11 +112,7 @@ export class MarketingDataService {
     }
 
     async retriveGoogleCampaignWithMetrics() {
-        const customer = this.ggClient.Customer({
-            customer_id: this.configService.get('google.login_customer_id'),
-            refresh_token: this.configService.get('google.refresh_token'),
-        })
-        const campaigns = await customer.report({
+        const campaigns = await this.ggCustomer.report({
             entity: "campaign",
             attributes: [
                 "campaign.id",
@@ -128,11 +134,7 @@ export class MarketingDataService {
         await this.baseDataService.pushDataToWarehouse(campaigns)
     }
     async retriveGoogleAdGroupMetricsByDate() {
-        const customer = this.ggClient.Customer({
-            customer_id: this.configService.get('google.login_customer_id'),
-            refresh_token: this.configService.get('google.refresh_token'),
-        })
-        const campaigns = await customer.report({
+        const campaigns = await this.ggCustomer.report({
             entity: "ad_group",
             metrics: [
                 "metrics.cost_micros",
