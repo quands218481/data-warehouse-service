@@ -17,6 +17,6 @@ export class WarehouseController {
     }
     @Get()
     get() {
-        this.baseService.yourMethod()
+        this.operationService.getCassoSMSBanking()
     }
 }

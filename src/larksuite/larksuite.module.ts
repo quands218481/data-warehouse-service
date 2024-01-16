@@ -10,6 +10,7 @@ import { Record, RecordSchema } from './records.schema';
 import { Connection } from 'mongoose';
 import * as sequence from 'mongoose-sequence'
 import { Transaction, TransactionSchema } from './transaction.schema';
+import { LarkRate, LarkRateSchema } from './larkRate.schema';
 
 @Module({
   imports: [ConfigModule,
@@ -32,6 +33,10 @@ import { Transaction, TransactionSchema } from './transaction.schema';
         {
           name: Transaction.name,
           schema: TransactionSchema
+        },
+        {
+          name: LarkRate.name,
+          schema: LarkRateSchema
         },
       ])
   ],

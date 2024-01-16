@@ -11,13 +11,15 @@ export class LarkSuiteController {
   //   return this.larkService.createRecord()
   // return this.larkService.getAppInfo();
   // }
-  @Get()
-  async get() {
-    return this.larkService.createApproval()
+  @Get('sync')
+  async sync() {
+    // return this.larkService.syncTableData()
   }
 
-  // @Post()
-  // async post() {
-    // return this.larkService.sendRecordsToVacom()
-  // }
+  @Get('test')
+  async test() {
+    return this.larkService.getNewSMSBanking()
+  }
+
+
 }

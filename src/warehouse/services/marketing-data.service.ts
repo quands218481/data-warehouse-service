@@ -10,7 +10,7 @@ import { BaseDataService } from "./base-data.service";
 export class MarketingDataService {
     private readonly ggClient: any;
     private readonly ggCustomer: any;
-    private readonly fbAdsAccount: any;
+    // private readonly fbAdsAccount: any;
     constructor(
         private readonly configService: ConfigService,
         private readonly http: HttpService,
@@ -30,15 +30,17 @@ export class MarketingDataService {
             // Use "auth2l fetch --credentials credentials.json --scope adwords \
             // >--output_format refresh_token" to generate refreshtoken because access_token that expired
         })
-        const api = FacebookAdsApi.init(
-            this.configService.get('facebook.access_token'),
-            this.configService.get('facebook.app_id'),
-            this.configService.get('facebook.app_secret'),
-        );
-        this.fbAdsAccount = new AdAccount(this.configService.get('facebook.ads_account_id'));
+        // const api = FacebookAdsApi.init(
+        //     this.configService.get('facebook.access_token'),
+        //     this.configService.get('facebook.app_id'),
+        //     this.configService.get('facebook.app_secret'),
+        // );
+        // this.fbAdsAccount = new AdAccount(this.configService.get('facebook.ads_account_id'));
     }
 
     async getTiktokCampaigns() {
+        const dataSet = 'MktData'
+        const dataTable = 'TiktokCampaign'
         const baseUrl = 'https://business-api.tiktok.com/open_api/v1.3/campaign/get/'
         const config = {
             headers: { 'Access-Token': this.configService.get('tiktok.access_token') },
@@ -46,11 +48,13 @@ export class MarketingDataService {
         }
         const res = await firstValueFrom(this.http.get(baseUrl, config))
         if (res && res.data) {
-            await this.baseDataService.pushDataToWarehouse(res.data)
+            await this.baseDataService.pushDataToWarehouse('', '',res.data)
         }
     }
 
     async getTiktokAdsGroups() {
+        const dataSet = 'MktData'
+        const dataTable = 'TiktokAdsGroup'
         const baseUrl = 'https://business-api.tiktok.com/open_api/v1.3/adgroup/get/'
         const config = {
             headers: { 'Access-Token': this.configService.get('tiktok.access_token') },
@@ -58,11 +62,13 @@ export class MarketingDataService {
         }
         const res = await firstValueFrom(this.http.get(baseUrl, config))
         if (res && res.data) {
-            await this.baseDataService.pushDataToWarehouse(res.data)
+            await this.baseDataService.pushDataToWarehouse('', '', res.data)
         }
     }
 
     async getTiktokAds() {
+        const dataSet = 'MktData'
+        const dataTable = 'TiktokAds'
         const baseUrl = 'https://business-api.tiktok.com/open_api/v1.3/ad/get/'
         const config = {
             headers: { 'Access-Token': this.configService.get('tiktok.access_token') },
@@ -70,23 +76,23 @@ export class MarketingDataService {
         }
         const res = await firstValueFrom(this.http.get(baseUrl, config))
         if (res && res.data) {
-            await this.baseDataService.pushDataToWarehouse(res.data)
+            await this.baseDataService.pushDataToWarehouse('', '',res.data)
         }
     }
 
-    async getFbCampaigns() {
-        // const fields = ['name', 'objective', 'status']
-        const fields = []
-        const params = { 'effective_status': ['ACTIVE', 'PAUSED'], };
-        let campaigns = await this.fbAdsAccount.getCampaigns(fields, params, { limit: 20 });
-        campaigns.forEach(c => console.log(c.name));
-        while (campaigns.hasNext()) {
-            //hasNext = true when this campaign has any Adset
-            campaigns = await campaigns.next();
-            campaigns.forEach(c => console.log(c.name));
-        }
-        await this.baseDataService.pushDataToWarehouse(campaigns)
-    }
+    // async getFbCampaigns() {
+    //     // const fields = ['name', 'objective', 'status']
+    //     const fields = []
+    //     const params = { 'effective_status': ['ACTIVE', 'PAUSED'], };
+    //     let campaigns = await this.fbAdsAccount.getCampaigns(fields, params, { limit: 20 });
+    //     campaigns.forEach(c => console.log(c.name));
+    //     while (campaigns.hasNext()) {
+    //         //hasNext = true when this campaign has any Adset
+    //         campaigns = await campaigns.next();
+    //         campaigns.forEach(c => console.log(c.name));
+    //     }
+    //     await this.baseDataService.pushDataToWarehouse(campaigns)
+    // }
 
     // async getFbAdSet() {
     //     const fields = [
@@ -112,6 +118,8 @@ export class MarketingDataService {
     }
 
     async retriveGoogleCampaignWithMetrics() {
+        const dataSet = 'MktData'
+        const dataTable = 'GoogleCampaign'
         const campaigns = await this.ggCustomer.report({
             entity: "campaign",
             attributes: [
@@ -131,9 +139,11 @@ export class MarketingDataService {
             },
             limit: 20,
         })
-        await this.baseDataService.pushDataToWarehouse(campaigns)
+        await this.baseDataService.pushDataToWarehouse(dataSet, dataTable, campaigns)
     }
     async retriveGoogleAdGroupMetricsByDate() {
+        const dataSet = 'MktData'
+        const dataTable = 'GoogleAdsGroup'
         const campaigns = await this.ggCustomer.report({
             entity: "ad_group",
             metrics: [
@@ -146,6 +156,6 @@ export class MarketingDataService {
             from_date: "2021-01-01",
             to_date: "2021-02-01",
         })
-        await this.baseDataService.pushDataToWarehouse(campaigns)
+        await this.baseDataService.pushDataToWarehouse(dataSet, dataTable,campaigns)
     }
 }

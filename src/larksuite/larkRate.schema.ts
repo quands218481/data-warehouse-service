@@ -3,32 +3,24 @@ import { Document } from 'mongoose';
 import { createSchemaForClassWithMethods } from '../create-schema';
 
 @Schema({ timestamps: true })
-export class Table extends Document {
-  @Prop({
-    required: false,
-  })
-  revision: number;
+export class LarkRate extends Document {
 
   @Prop({
     required: false,
   })
-  name: string;
-
-  @Prop({
-    required: true,
-  })
-  type: string;
+  provider: string;
 
   @Prop({
     required: false,
   })
-  table_id: string
+  data: any[]
 
   @Prop({
-    required: true,
+    required: false,
   })
-  flag_number: number
+  type: string
 
+  
   @Prop({
     // required: true
   })
@@ -41,4 +33,4 @@ export class Table extends Document {
 
 }
 
-export const TableSchema = createSchemaForClassWithMethods(Table);
+export const LarkRateSchema = createSchemaForClassWithMethods(LarkRate);
